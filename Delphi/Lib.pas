@@ -6,10 +6,12 @@ uses
   WinApi.Windows, System.UITypes, Vcl.Graphics, SysUtils, Classes;
 
 type TIntArray = TArray<Int64>;
+type TStringArray = TArray<String>;
 
 procedure FgColor(AColor: TColor);
 function ToIntArray(Strings: TStrings): TIntArray;
 function Load(FileName: String): TIntArray;
+function LoadStrings(FileName: String): TStringArray;
 procedure Validate(Result: String; Expected: String);
 
 implementation
@@ -41,6 +43,17 @@ begin
   try
     Input.LoadFromFile(FileName);
     Result := ToIntArray(Input);
+  finally
+    Input.Free;
+  end;
+end;
+
+function LoadStrings(FileName: String): TStringArray;
+begin
+  var Input := TStringList.Create;
+  try
+    Input.LoadFromFile(FileName);
+    Result := Input.ToStringArray;
   finally
     Input.Free;
   end;
