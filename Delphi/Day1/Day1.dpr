@@ -23,7 +23,18 @@ end;
 
 function Day1_2(Input: TIntArray): String;
 begin
-
+  var Prev := 0;
+  var Count := 0;
+  for var i := Low(Input) to High(Input) - 2 do
+  begin
+    var Sum := 0;
+    for var j := 0 to 2 do
+      Inc(Sum, Input[i+j]);
+    if (i > 0) and (Sum > Prev) then
+      Inc(Count);
+    Prev := Sum;
+  end;
+  Result := Count.ToString;
 end;
 
 var
@@ -38,7 +49,7 @@ begin
 
   WriteLn(#10'Final');
   Input := Load('Day1.1.input.txt');
-  Result := Day1_2(Input);
+  Result := Day1_1(Input);
   Validate(Result, '1602');
   Result := Day1_2(Input);
   Validate(Result, '');
