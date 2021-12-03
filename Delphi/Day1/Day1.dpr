@@ -5,41 +5,44 @@ program Day1;
 {$R *.res}
 
 uses
-  System.SysUtils, Classes;
+  Lib in '..\Lib.pas',
+  Vcl.Graphics,   Classes, SysUtils;
 
-procedure Validate(Result: String; Expected: String);
-begin
-  if Result = Expected then
-    WriteLn('Result is ', Result, ' as expected')
-  else
-    WriteLn('Expected ', Expected, ', got ', Result);
-end;
-
-function Day1_1(Input: TStringList): String;
+function Day1_1(Input: TIntArray): String;
 begin
   var Count := 0;
   var Prev := Input[0];
   for var Current in Input do
   begin
-    if Current.ToInt64 > Prev.ToInt64 then
+    if Current > Prev then
       Inc(Count);
     Prev := Current;
   end;
   Result := Count.ToString;
 end;
 
+function Day1_2(Input: TIntArray): String;
+begin
+
+end;
+
 var
-  Input: TStringList;
   Result: String;
 begin
-  Input := TStringList.Create;
-  Input.LoadFromFile('Day1.1.test.txt');
+  WriteLn('Tests');
+  var Input := Load('Day1.1.test.txt');
   Result := Day1_1(Input);
   Validate(Result, '7');
-  Input.LoadFromFile('Day1.1.input.txt');
-  Result := Day1_1(Input);
-  Validate(Result, '1602');
+  Result := Day1_2(Input);
+  Validate(Result, '5');
 
-  WriteLn('Hit it');
+  WriteLn(#10'Final');
+  Input := Load('Day1.1.input.txt');
+  Result := Day1_2(Input);
+  Validate(Result, '1602');
+  Result := Day1_2(Input);
+  Validate(Result, '');
+
+  WriteLn(#10'Hit it');
   ReadLn;
 end.
