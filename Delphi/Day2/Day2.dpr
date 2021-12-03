@@ -46,6 +46,21 @@ end;
 
 function Day2_2(Input: TInstructionArray): String;
 begin
+  var Horz := 0;
+  var Depth := 0;
+  var Aim := 0;
+  for var Instruction in Input do
+    if Instruction.Direction = 'forward' then
+    begin
+      Inc(Horz, Instruction.Quantity);
+      Inc(Depth, Instruction.Quantity * Aim);
+    end
+    else if Instruction.Direction = 'up' then
+      Dec(Aim, Instruction.Quantity)
+    else if Instruction.Direction = 'down' then
+      Inc(Aim, Instruction.Quantity);
+
+  Result := (Horz * Depth).ToString;
 end;
 
 var
@@ -56,14 +71,14 @@ begin
   Result := Day2_1(Input);
   Validate(Result, '150');
   Result := Day2_2(Input);
-  Validate(Result, '');
+  Validate(Result, '900');
 
   WriteLn(#10'Final');
   Input := LoadInstructions('Day2.input.txt');
   Result := Day2_1(Input);
   Validate(Result, '2272262');
   Result := Day2_2(Input);
-  Validate(Result, '');
+  Validate(Result, '2134882034');
 
   WriteLn(#10'Hit it');
   ReadLn;
