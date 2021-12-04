@@ -20,6 +20,7 @@ type
     Cells: array[0..4, 0..4] of TCell;
     CalledRows: array[0..4] of Boolean;
     CalledCols: array[0..4] of Boolean;
+    Won: Boolean;
   end;
   PCard = ^TCard;
   TBingo = record
@@ -59,8 +60,6 @@ begin
         if Card.Cells[Row][Col].Number = Number then
         begin
           Card.Cells[Row][Col].Called := True;
-          Assert(Card.CalledRows[Row] = False, 'Row not called yet');
-          Assert(Card.CalledCols[Col] = False, 'Col not called yet');
 
           var RowCheck := 0;
           var ColCheck := 0;
@@ -74,12 +73,11 @@ begin
           if ColCheck = 5 then
             Card.CalledCols[Col] := True;
 
-          if Card.CalledRows[Row] or Card.CalledCols[Col] then
+          if (Card.CalledRows[Row] or Card.CalledCols[Col]) and not Card.Won then
           begin
             SetLength(Bingo.Winners, Length(Bingo.Winners) + 1);
             Bingo.Winners[High(Bingo.Winners)] := c;
-
-            Break;
+            Card.Won := True;
           end;
         end;
   end;
@@ -110,6 +108,14 @@ end;
 
 function Day4_2(Raw: TStringArray): String;
 begin
+  var Bingo := LoadBingo(Raw);
+
+  repeat
+    Draw(Bingo);
+  until Length(Bingo.Winners) = Length(Bingo.Cards);
+
+  var Number := Bingo.Numbers[Bingo.Index];
+  Result := (Number * SumUnmarked(Bingo.Cards[Bingo.Winners[High(Bingo.Winners)]])).ToString;
 end;
 
 var
@@ -120,7 +126,7 @@ begin
   Result := Day4_1(Input);
   Validate(Result, '4512');
   Result := Day4_2(Input);
-  Validate(Result, '');
+  Validate(Result, '1924');
 
   WriteLn(#10'Final');
   Input := LoadStrings('Day4.input.txt');
