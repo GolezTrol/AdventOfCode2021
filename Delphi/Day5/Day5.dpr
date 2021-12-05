@@ -10,6 +10,7 @@ uses
   Vcl.Graphics,
   Classes,
   SysUtils,
+  Math,
   System.Generics.Collections;
 
 
@@ -31,14 +32,14 @@ begin
   begin
     for var X := 0 to 10 do
       if Grid.Cells.TryGetValue(Point(X, Y), Cell) then
-        Write(Cell.Count.ToString)
+        Write(Format('%2d', [Cell.Count]))
       else
-        Write('.');
+        Write(' .');
     WriteLn;
   end;
 end;
 
-function Day5_1(Raw: TStringArray): String;
+function Solve(Raw: TStringArray; IncludeDiagonal: Boolean): String;
 var
   X1, Y1, X2, Y2: Integer;
   Grid: TGrid;
@@ -49,19 +50,21 @@ begin
   for var Line in Raw do
   begin
     Parser.CommaText := Line.Replace(' -> ', ',');
-    WriteLn(Line);
     X1 := Parser[0].ToInteger;
     Y1 := Parser[1].ToInteger;
     X2 := Parser[2].ToInteger;
     Y2 := Parser[3].ToInteger;
-    if X1 > X2 then begin var X := X1; X1 := X2; X2 := X; end;
-    if Y1 > Y2 then begin var Y := Y1; Y1 := Y2; Y2 := Y; end;
 
+    if (X1 = X2) or (Y1 = Y2) or IncludeDiagonal then
+    begin
+      var Dist := Max(Abs(X2-X1), Abs(Y2-Y1));
 
-    if (X1 = X2) or (Y1 = Y2) then
-      for var X := X1 to X2 do
-        for var Y := Y1 to Y2 do
-          Grid.IncCellCount(Point(X, Y));
+      var XDelta := Sign(X2-X1);
+      var YDelta := Sign(Y2-Y1);
+
+      for var l := 0 to Dist do
+        Grid.IncCellCount(Point(X1+XDelta*l, Y1+YDelta*l));
+    end;
   end;
 
   Plot(Grid);
@@ -75,8 +78,14 @@ begin
   Result := Count.ToString;
 end;
 
+function Day5_1(Raw: TStringArray): String;
+begin
+  Result := Solve(Raw, False);
+end;
+
 function Day5_2(Raw: TStringArray): String;
 begin
+  Result := Solve(Raw, True);
 end;
 
 { TGrid }
@@ -105,14 +114,14 @@ begin
   Result := Day5_1(Input);
   Validate(Result, '5');
   Result := Day5_2(Input);
-  Validate(Result, '');
+  Validate(Result, '12');
 
   WriteLn(#10'Final');
   Input := LoadStrings('Day5.input.txt');
   Result := Day5_1(Input);
   Validate(Result, '5632');
   Result := Day5_2(Input);
-  Validate(Result, '');
+  Validate(Result, '22213');
 
   WriteLn(#10'Hit it');
   ReadLn;
