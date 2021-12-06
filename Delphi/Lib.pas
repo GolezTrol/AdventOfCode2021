@@ -13,6 +13,7 @@ function ToIntArray(Strings: TStrings): TIntArray;
 function Load(FileName: String): TIntArray;
 function LoadStrings(FileName: String): TStringArray;
 procedure Validate(Result: String; Expected: String);
+procedure ValidateNr(Result: Int64; Expected: Int64);
 
 implementation
 
@@ -57,6 +58,22 @@ begin
   finally
     Input.Free;
   end;
+end;
+
+procedure ValidateNr(Result: Int64; Expected: Int64);
+begin
+  if Result = Expected then
+  begin
+    FgColor(clGreen);
+    WriteLn('Result is ', Result, ' as expected')
+  end
+  else
+  begin
+    FgColor(clRed);
+    WriteLn('Expected ', Expected, ', got ', Result);
+  end;
+
+  FgColor(clDefault);
 end;
 
 procedure Validate(Result: String; Expected: String);
