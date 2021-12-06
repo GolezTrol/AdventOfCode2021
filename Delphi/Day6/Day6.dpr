@@ -23,11 +23,15 @@ var
 begin
   Sum := 0;
   // Initialize an array of 'timers'/states, with how many fish are in that state
-  ZeroMemory(@FishStates[0], Length(FishStates) * SizeOf(FishStates[0]));
-    
-  for var C in Raw[0] do
-    if C <> ',' then
-      Inc(FishStates[Ord(C) - Ord('0')]);
+  ZeroMemory(@FishStates[0], (Length(FishStates) - 1) * SizeOf(FishStates[0]));
+
+  var Len := Length(Raw[0]);
+  var P := 1;
+  while P <= Len do
+  begin
+    Inc(FishStates[Ord(Raw[0][P]) - Ord('0')]);
+    Inc(P, 2);
+  end;
 
   // Iterate for the number of days.
   for var Day := 1 to Days do
@@ -73,7 +77,7 @@ begin
   var s := TStopwatch.StartNew;
   for var i := 1 to 1000 do
     Result := Day6_2(Input);
-  WriteLn((s.ElapsedTicks * 1000) div s.Frequency);
+  WriteLn((s.ElapsedTicks * 1000000) div s.Frequency, ' nanoseconds);
   WriteLn(s.ElapsedMilliseconds);
   Validate(Result, '1710623015163');
 
