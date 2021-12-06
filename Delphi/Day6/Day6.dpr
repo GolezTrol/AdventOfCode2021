@@ -34,17 +34,26 @@ begin
   end;
 
   // Iterate for the number of days.
+  var Day0 := 0;
+  var Day7 := 7;
+  var Day9 := 9;
   for var Day := 1 to Days do
   begin
-    FishStates[9] := FishStates[0]; // Spawn new fishes in a 'spawn buffer'
-    Inc(FishStates[7], FishStates[0]); // Reset timer for fished in 0, by adding them to 7
-    // Move the whole array. A 'day 0' pointer would be more efficient, but with
-    // just 256 iterations, this is fine.
-    CopyMemory(@FishStates[0], @FishStates[1], SizeOf(FishStates[0]) * 9);
+    FishStates[(Day9)] := FishStates[Day0]; // Spawn new fishes in a 'spawn buffer'
+    Inc(FishStates[(Day7)], FishStates[Day0]); // Reset timer for fished in 0, by adding them to 7
+
+    // Instead of shifting the array of states (Day 1 becomes Day 0), increment
+    // a day pointer instead. Keep separate pointers for days needed, and keep them
+    // in 0 to 9 using an if, which beats mod 10 by _a lot_
+    Inc(Day0); Inc(Day7); Inc(Day9);
+    if Day0 = 10 then Day0 := 0;
+    if Day7 = 10 then Day7 := 0;
+    if Day9 = 10 then Day9 := 0;
   end;
 
   // Sum the fish per state, excluding the ones in [9], which is the spawn buffer.
-  for var i := 0 to 8 do
+  for var i := 0 to 9 do
+    if i <> Day9 then
       Sum := Sum + FishStates[i];
   Result := Sum.ToString;
 end;
