@@ -45,7 +45,7 @@ begin
 
   // Sum the fish per state, excluding the ones in [9], which is the spawn buffer.
   for var i := 0 to 8 do
-    Sum := Sum + FishStates[i];
+      Sum := Sum + FishStates[i];
   Result := Sum.ToString;
 end;
 
@@ -63,6 +63,7 @@ var
   Result: String;
 begin
   WriteLn('Tests');
+  Sleep(100);
   var Input := LoadStrings('Day6.test.txt');
   Result := Day6_1(Input);
   Validate(Result, '5934');
@@ -75,10 +76,11 @@ begin
   Validate(Result, '380758');
 
   var s := TStopwatch.StartNew;
-  for var i := 1 to 1000 do
+  const Iterations = 1000000;
+  for var i := 1 to Iterations do
     Result := Day6_2(Input);
-  WriteLn((s.ElapsedTicks * 1000000) div s.Frequency, ' nanoseconds);
-  WriteLn(s.ElapsedMilliseconds);
+  WriteLn(((s.ElapsedTicks * 1000000000) div Iterations) div s.Frequency, ' ns per simulation');
+  WriteLn(Iterations, ' iterations in ', s.ElapsedMilliseconds, ' ms');
   Validate(Result, '1710623015163');
 
   WriteLn(#10'Hit it');
