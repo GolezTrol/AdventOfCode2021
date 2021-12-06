@@ -24,10 +24,10 @@ begin
   Sum := 0;
   // Initialize an array of 'timers'/states, with how many fish are in that state
   ZeroMemory(@FishStates[0], Length(FishStates) * SizeOf(FishStates[0]));
-
-  var States := Raw[0].Split([',']);
-  for var State in States do
-    Inc(FishStates[State.ToInteger]);
+    
+  for var C in Raw[0] do
+    if C <> ',' then
+      Inc(FishStates[Ord(C) - Ord('0')]);
 
   // Iterate for the number of days.
   for var Day := 1 to Days do
