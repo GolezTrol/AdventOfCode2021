@@ -9,6 +9,7 @@ type TIntArray = TArray<Int64>;
 type TStringArray = TArray<String>;
 
 procedure FgColor(AColor: TColor);
+procedure CursorPos(const X, Y: SmallInt);
 function ToIntArray(Strings: TStrings): TIntArray;
 function Load(FileName: String): TIntArray;
 function LoadStrings(FileName: String): TStringArray;
@@ -29,6 +30,14 @@ begin
     clPurple: SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),FOREGROUND_RED or FOREGROUND_BLUE or FOREGROUND_INTENSITY);
     clAqua: SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),FOREGROUND_GREEN or FOREGROUND_BLUE or FOREGROUND_INTENSITY);
   end;
+end;
+
+procedure CursorPos(const X, Y: SmallInt);
+var
+  Coord: TCoord;
+begin
+  Coord.X := X; Coord.Y := Y;
+  SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Coord);
 end;
 
 function ToIntArray(Strings: TStrings): TIntArray;

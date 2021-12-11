@@ -44,8 +44,10 @@ end;
 
 procedure PrintGrid(var Grid: TGrid);
 begin
+  Sleep(3);
   for var p := Low(Grid) to High(Grid) do
   begin
+    CursorPos(30 + (p mod 10) * 2, p div 10);
     FgColor(clDefault);
     if Grid[p] = 10 then
       FgColor(clRed) // Armed
@@ -87,7 +89,7 @@ begin
         Inc(Flashes);
       end;
     end;
-    //PrintGrid(Grid);
+    PrintGrid(Grid);
   until not Flashed;
 
   PrintGrid(Grid);
@@ -118,13 +120,27 @@ begin
   var Grid := Grid(Inputs);
   for var i := 1 to 100 do
   begin
-    WriteLn('Step: ', i);
+    CursorPos(0,0);
+    WriteLn('Step: ', i, '    ');
     Step(Grid, Result);
   end;
+  CursorPos(0,3);
 end;
 
 function Solve2(const Inputs: TStringArray): BigInt;
 begin
+  Result := 0;
+  var Grid := Grid(Inputs);
+  var Flashes: BigInt;
+  repeat
+    CursorPos(0,0);
+    Inc(Result);
+    WriteLn('Step: ', Result, '    ');
+    Flashes := 0;
+    Step(Grid, Flashes);
+    Sleep(10);
+  until Flashes = 100;
+  CursorPos(0,4);
 end;
 
 var
@@ -139,12 +155,12 @@ begin
 
   ValidateNr(Result, 1656);
   Result := Solve2(Input);
-  ValidateNr(Result, 0);
+  ValidateNr(Result, 195);
 
   WriteLn(#10'Final');
   Input := LoadStrings('Day11.input.txt');
   Result := Solve1(Input);
-  ValidateNr(Result, 0);
+  ValidateNr(Result, 1617);
 
   var s := TStopwatch.StartNew;
   const Iterations = 1;
@@ -152,7 +168,7 @@ begin
   Result := Solve2(Input);
   //WriteLn(((s.ElapsedTicks * 1000000000) div Iterations) div s.Frequency, ' ns per simulation');
   WriteLn(Iterations, ' iterations in ', s.ElapsedMilliseconds, ' ms');
-  ValidateNr(Result, 0);
+  ValidateNr(Result, 258);
 
   WriteLn(#10'Hit it');
   ReadLn;
