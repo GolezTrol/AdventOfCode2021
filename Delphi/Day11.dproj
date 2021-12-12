@@ -6,7 +6,7 @@
         <FrameworkType>None</FrameworkType>
         <MainSource>Day11.dpr</MainSource>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
-        <ProjectGuid>{35EEDC41-7901-4CDD-9D17-6A6039B2C6DE}</ProjectGuid>
+        <ProjectGuid>{A81912A7-3498-42C1-8CCE-5B6D33FF05B1}</ProjectGuid>
         <ProjectVersion>19.2</ProjectVersion>
         <TargetedPlatforms>3</TargetedPlatforms>
     </PropertyGroup>
