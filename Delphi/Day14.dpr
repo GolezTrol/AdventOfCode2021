@@ -25,7 +25,7 @@ type
     NewCount: BigInt;
   end;
 
-function Solve1(const Inputs: TStringArray): BigInt;
+function Solve(const Inputs: TStringArray; const Steps: Integer): BigInt;
 begin
   var Pairs := TDictionary<String, TPolyPair>.Create;
   var Template := Inputs[0];
@@ -36,7 +36,6 @@ begin
     var Pair := TPolyPair.Create;
     Pair.Insertion := Inputs[i][7];
     Pair.Key := Copy(Inputs[i], 1, 2);
-    WriteLn(Pair.Key, ' ---> ', Pair.Insertion);
     Pairs.Add(Pair.Key, Pair);
   end;
 
@@ -49,7 +48,6 @@ begin
   end;
 
   // Do the steps
-  var Steps := 10;
   for var i := 1 to Steps do
   begin
     // Each insertion results in two new pairs. Increase the count of those pairs.
@@ -73,7 +71,6 @@ begin
   var Elements := TDictionary<String, BigInt>.Create;
   for var Pair in Pairs.Values do
   begin
-    WriteLn(Pair.Key, ' (', Pair.Key[1], ')');
     var Count: BigInt;
     if not Elements.TryGetValue(Pair.Key[1], Count) then
       Count := 0;
@@ -100,8 +97,14 @@ begin
   Result := Max - Min;
 end;
 
+function Solve1(const Inputs: TStringArray): BigInt;
+begin
+  Result := Solve(Inputs, 10);
+end;
+
 function Solve2(const Inputs: TStringArray): BigInt;
 begin
+  Result := Solve(Inputs, 40);
 end;
 
 var
@@ -116,7 +119,7 @@ begin
 
   ValidateNr(Result, 1588);
   Result := Solve2(Input);
-  ValidateNr(Result, 0);
+  ValidateNr(Result, 2188189693529);
 
   WriteLn(#10'Final');
   Input := LoadStrings('Day14.input.txt');
@@ -124,12 +127,12 @@ begin
   ValidateNr(Result, 2899);
 
   var s := TStopwatch.StartNew;
-  const Iterations = 1;
-  // for var i := 1 to Iterations do
-  Result := Solve2(Input);
-  //WriteLn(((s.ElapsedTicks * 1000000000) div Iterations) div s.Frequency, ' ns per simulation');
+  const Iterations = 10;
+  for var i := 1 to Iterations do
+    Result := Solve2(Input);
+  WriteLn(((s.ElapsedTicks * 1000000000) div Iterations) div s.Frequency, ' ns per simulation');
   WriteLn(Iterations, ' iterations in ', s.ElapsedMilliseconds, ' ms');
-  ValidateNr(Result, 0);
+  ValidateNr(Result, 3528317079545);
 
   WriteLn(#10'Hit it');
   ReadLn;
