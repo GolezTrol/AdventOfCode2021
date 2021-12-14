@@ -21,9 +21,16 @@ type
   TCave = class
     Name: String;
     Large: Boolean;
+    Connections: TArray<TCave>;
     Visited: Boolean;
-    Paths: TArray<TCave>;
-    Visits: TArray<Integer>;
+  end;
+
+  TCaveList = TList<TCave>;
+  TPath = record
+    Caves: TArray<TCave>;
+    function ToString: String; overload;
+    class function ToString(const Caves: TArray<TCave>): String; overload; static;
+    class function Create(Caves: TCaveList): TPath; static;
   end;
 
   TCaveSystem = class
@@ -32,15 +39,24 @@ type
   public
     constructor Create;
     procedure AddPath(Path: String);
-    procedure Reset;
+    procedure FindPathsFrom(const From: TCave; var Path: TCaveList; var Paths: TArray<TPath>);
+    function FindPaths: TArray<TPath>;
   end;
 
-function Solve1(const Inputs: TStringArray): BigInt;
-
+function Solve(const Inputs: TStringArray; const SmallCaveMaxVisitCount: Integer): BigInt;
 begin
   var cs := TCaveSystem.Create;
   for var Input in Inputs do
     cs.AddPath(Input);
+
+  var Paths := cs.FindPaths;
+
+  Result := Length(Paths);
+end
+
+function Solve1(const Inputs: TStringArray): BigInt;
+begin
+  Result := Solve(Inputs, 1);
 end;
 
 function Solve2(const Inputs: TStringArray): BigInt;
@@ -61,6 +77,8 @@ procedure TCaveSystem.AddPath(Path: String);
       Result := TCave.Create;
       Result.Name := Name;
       Result.Large := UpperCase(Name) = Name;
+      Result.Visited := False;
+      Caves.Add(Name, Result)
     end;
     if Name = 'start' then
       s := Result;
@@ -69,11 +87,12 @@ procedure TCaveSystem.AddPath(Path: String);
   end;
   procedure Connect(const A, B: TCave);
   begin
-    // No paths to start or from end
-    if (B <> s) and (A <> e) then
+    // No paths to start or from end? Doesn't matter.
+    //if (B <> s) and (A <> e) then
     begin
-      SetLength(A.Paths, Length(A.Paths)+1);
-      A.Paths[High(A.Paths)] := B;
+      SetLength(A.Connections, Length(A.Connections)+1);
+      A.Connections[High(A.Connections)] := B;
+      WriteLn('Connecting ', A.Name, ' to ', B.Name, '. ', A.Name, ' now has ', Length(A.Connections), ' connections');
     end;
   end;
 begin
@@ -89,13 +108,69 @@ begin
   Caves := TObjectDictionary<String, TCave>.Create;
 end;
 
-procedure TCaveSystem.Reset;
+function TCaveSystem.FindPaths: TArray<TPath>;
 begin
-  for var Cave in Caves.Values do
+  var Path := TCaveList.Create;
+  writeLn('start count: ', Length(s.Connections));
+  WriteLn(s.Connections[0].Name);
+  FindPathsFrom(s, Path, Result);
+  Assert(Path.Count = 0, 'Backtracked all the way');
+end;
+
+procedure TCaveSystem.FindPathsFrom(
+  const From: TCave;
+  var Path: TCaveList;
+  var Paths: TArray<TPath>);
+begin
+  // Already been in this small cave? Bail, invalid node.
+  if From.Visited and not From.Large then
+    Exit;
+
+  // Valid target. Add to path.
+  Path.Add(From);
+
+  // If it was the end cave, save the path
+  if From = e then
   begin
-    Cave.Visited := False;
-    SetLength(Cave.Visits, 0);
+    SetLength(Paths, Length(Paths)+1);
+    Paths[High(Paths)] := TPath.Create(Path);
+    WriteLn('YAAAAY  ', Paths[High(Paths)].ToString);
+    writeLn;
+  end
+  else
+  begin
+    // Search onwards towards all caves that can be reached from here
+    From.Visited := True;
+    for var Connection in From.Connections do
+      FindPathsFrom(Connection, Path, Paths);
+    // Backtrack. Reset visited flag (only relevant for small caves)
+    From.Visited := False;
   end;
+
+  Path.Delete(Path.Count - 1);
+end;
+
+{ TPath }
+
+function TPath.ToString: String;
+begin
+  Result := ToString(Caves);
+end;
+
+class function TPath.Create(Caves: TCaveList): TPath;
+begin
+  SetLength(Result.Caves, Caves.Count);
+  for var i := 0 to Caves.Count - 1 do
+    Result.Caves[i] := Caves[i];
+end;
+
+class function TPath.ToString(const Caves: TArray<TCave>): String;
+begin
+  Result := '';
+  for var Cave in Caves do
+    Result := Result + '-' + Cave.Name;
+  if Result <> '' then
+    Delete(Result, 1, 1);
 end;
 
 begin
@@ -112,7 +187,7 @@ begin
   WriteLn(#10'Final');
   Input := LoadStrings('Day12.input.txt');
   Result := Solve1(Input);
-  ValidateNr(Result, 0);
+  ValidateNr(Result, 4411);
 
   var s := TStopwatch.StartNew;
   const Iterations = 1;
