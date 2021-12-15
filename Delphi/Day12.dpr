@@ -22,9 +22,10 @@ type
     Name: String;
     Large: Boolean;
     Connections: TArray<TCave>;
-    Visited: Boolean;
+    Visits: Integer;
   end;
 
+  TDummy = Boolean;
   TCaveList = TList<TCave>;
   TPath = record
     Caves: TArray<TCave>;
@@ -32,6 +33,7 @@ type
     class function ToString(const Caves: TArray<TCave>): String; overload; static;
     class function Create(Caves: TCaveList): TPath; static;
   end;
+  TPaths = TDictionary<String, TPath>;
 
   TCaveSystem = class
     Caves: TObjectDictionary<String, TCave>;
@@ -39,20 +41,30 @@ type
   public
     constructor Create;
     procedure AddPath(Path: String);
-    procedure FindPathsFrom(const From: TCave; var Path: TCaveList; var Paths: TArray<TPath>);
-    function FindPaths: TArray<TPath>;
   end;
 
-function Solve(const Inputs: TStringArray; const SmallCaveMaxVisitCount: Integer): BigInt;
+  TPathFinder = class
+  strict private
+    s, e, x: TCave;
+    MaxSmallCaveVisits: Integer;
+    procedure FindPathsFrom(const From: TCave; const Path: TCaveList; const Paths: TPaths);
+  public
+    function FindPaths: TPaths;
+    constructor Create(CaveSystem: TCaveSystem; MaxSmallCaveVisits: Integer);
+  end;
+
+function Solve(const Inputs: TStringArray; const MaxSmallCaveVisits: Integer): BigInt;
 begin
   var cs := TCaveSystem.Create;
   for var Input in Inputs do
     cs.AddPath(Input);
 
-  var Paths := cs.FindPaths;
+  var PathFinder := TPathFinder.Create(cs, MaxSmallCaveVisits);
 
-  Result := Length(Paths);
-end
+  var Paths := PathFinder.FindPaths;
+
+  Result := Paths.Count;
+end;
 
 function Solve1(const Inputs: TStringArray): BigInt;
 begin
@@ -61,6 +73,7 @@ end;
 
 function Solve2(const Inputs: TStringArray): BigInt;
 begin
+  Result := Solve(Inputs, 2);
 end;
 
 var
@@ -77,7 +90,6 @@ procedure TCaveSystem.AddPath(Path: String);
       Result := TCave.Create;
       Result.Name := Name;
       Result.Large := UpperCase(Name) = Name;
-      Result.Visited := False;
       Caves.Add(Name, Result)
     end;
     if Name = 'start' then
@@ -92,7 +104,6 @@ procedure TCaveSystem.AddPath(Path: String);
     begin
       SetLength(A.Connections, Length(A.Connections)+1);
       A.Connections[High(A.Connections)] := B;
-      WriteLn('Connecting ', A.Name, ' to ', B.Name, '. ', A.Name, ' now has ', Length(A.Connections), ' connections');
     end;
   end;
 begin
@@ -106,48 +117,6 @@ end;
 constructor TCaveSystem.Create;
 begin
   Caves := TObjectDictionary<String, TCave>.Create;
-end;
-
-function TCaveSystem.FindPaths: TArray<TPath>;
-begin
-  var Path := TCaveList.Create;
-  writeLn('start count: ', Length(s.Connections));
-  WriteLn(s.Connections[0].Name);
-  FindPathsFrom(s, Path, Result);
-  Assert(Path.Count = 0, 'Backtracked all the way');
-end;
-
-procedure TCaveSystem.FindPathsFrom(
-  const From: TCave;
-  var Path: TCaveList;
-  var Paths: TArray<TPath>);
-begin
-  // Already been in this small cave? Bail, invalid node.
-  if From.Visited and not From.Large then
-    Exit;
-
-  // Valid target. Add to path.
-  Path.Add(From);
-
-  // If it was the end cave, save the path
-  if From = e then
-  begin
-    SetLength(Paths, Length(Paths)+1);
-    Paths[High(Paths)] := TPath.Create(Path);
-    WriteLn('YAAAAY  ', Paths[High(Paths)].ToString);
-    writeLn;
-  end
-  else
-  begin
-    // Search onwards towards all caves that can be reached from here
-    From.Visited := True;
-    for var Connection in From.Connections do
-      FindPathsFrom(Connection, Path, Paths);
-    // Backtrack. Reset visited flag (only relevant for small caves)
-    From.Visited := False;
-  end;
-
-  Path.Delete(Path.Count - 1);
 end;
 
 { TPath }
@@ -173,6 +142,76 @@ begin
     Delete(Result, 1, 1);
 end;
 
+{ TPathFinder }
+
+constructor TPathFinder.Create(CaveSystem: TCaveSystem;
+  MaxSmallCaveVisits: Integer);
+begin
+  s := CaveSystem.S;
+  e := CaveSystem.E;
+  Self.MaxSmallCaveVisits := MaxSmallCaveVisits;
+end;
+
+function TPathFinder.FindPaths: TPaths;
+begin
+  var Path := TCaveList.Create;
+  Result := TDictionary<String, TPath>.Create;
+  FindPathsFrom(s, Path, Result);
+  Assert(Path.Count = 0, 'Backtracked all the way');
+end;
+
+procedure TPathFinder.FindPathsFrom(
+  const From: TCave;
+  const Path: TCaveList;
+  const Paths: TPaths);
+begin
+  // Already been in this small cave too often? Bail.
+  if (From.Visits = MaxSmallCaveVisits) and not From.Large then
+    Exit;
+
+  // Small cave, already visited, and not the one that can be visited more than once
+  if (From.Visits = 1) and Assigned(x) and (From <> x) and not From.Large then
+    Exit;
+
+  // Do not go back to start
+  if (From = s) and (From.Visits = 1) then
+    Exit;
+
+  // Valid target. Add to path.
+  Path.Add(From);
+
+  // If it was the end cave, save the path
+  if From = e then
+  begin
+    var FoundPath := TPath.Create(Path);
+    var Key := FoundPath.ToString;
+    if Paths.ContainsKey(Key) then
+      WriteLn('( ', Key, ' )')
+    else
+    begin
+      Paths.Add(Key, FoundPath);
+      WriteLn('+ ', Key);
+    end;
+  end
+  else
+  begin
+    // Search onwards towards all caves that can be reached from here
+    Inc(From.Visits);
+    if (From.Visits > 1) and not From.Large then
+      x := From;
+
+    for var Connection in From.Connections do
+      FindPathsFrom(Connection, Path, Paths);
+    // Backtrack. Reset visited flag (only relevant for small caves)
+    Dec(From.Visits);
+    if x = From then
+      x := nil;
+
+  end;
+
+  Path.Delete(Path.Count - 1);
+end;
+
 begin
 
   WriteLn('Tests');
@@ -182,7 +221,7 @@ begin
 
   ValidateNr(Result, 10);
   Result := Solve2(Input);
-  ValidateNr(Result, 0);
+  ValidateNr(Result, 36);
 
   WriteLn(#10'Final');
   Input := LoadStrings('Day12.input.txt');
@@ -195,7 +234,7 @@ begin
   Result := Solve2(Input);
   //WriteLn(((s.ElapsedTicks * 1000000000) div Iterations) div s.Frequency, ' ns per simulation');
   WriteLn(Iterations, ' iterations in ', s.ElapsedMilliseconds, ' ms');
-  ValidateNr(Result, 0);
+  ValidateNr(Result, 136767);
 
   WriteLn(#10'Hit it');
   ReadLn;
