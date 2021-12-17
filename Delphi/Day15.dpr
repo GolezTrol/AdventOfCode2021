@@ -47,12 +47,40 @@ begin
   end;
   Result.Dimensions.X := Length(Grid[0]);
   Result.Dimensions.Y := Length(Grid);
-  Grid[Result.Dimensions.Y-1][Result.Dimensions.X-1].Risk :=
-    Grid[Result.Dimensions.Y-1][Result.Dimensions.X-1].Height;
   Result.Grid := Grid;
 end;
 
-function Solve1(const Inputs: TStringArray; Offset: Integer): BigInt;
+procedure Wrap(var Puzzle: TPuzzle; const Multi: Integer);
+begin
+  if Multi = 1 then Exit;
+
+  var Grid := Puzzle.Grid;
+  var g: TGrid;
+  var pd := Puzzle.Dimensions;
+  // Set the new dimensions
+  SetLength(g, pd.Y * Multi);
+  for var y := Low(g) to High(g) do
+    SetLength(g[y], pd.X * Multi);
+
+  for var y := 0 to pd.Y-1 do
+    for var x := 0 to pd.X-1 do
+      for var my := 0 to Multi - 1 do
+        for var mx := 0 to Multi - 1 do
+        begin
+          // The height is incremented by the 'manhattan' distance (x + y)
+          var Height := Grid[y][x].Height + mx + my;
+          // Wrapping. -1, mod 9, + 1?
+          while Height > 9 do Dec(Height, 9);
+
+          g[y+pd.Y*my][x+pd.X*mx] := Grid[y][x]; // Copy record
+          g[y+pd.Y*my][x+pd.X*mx].Height := Height; // Override height
+        end;
+
+  Puzzle.Dimensions := TPoint.Create(pd.X * Multi, pd.Y * Multi);
+  Puzzle.Grid := g;
+end;
+
+function Solve(const Inputs: TStringArray; const Multi: Integer): BigInt;
 var
   Puzzle: TPuzzle;
   Buffer: TList<TPoint>;
@@ -106,6 +134,12 @@ var
 
 begin
   Puzzle := Load(Inputs);
+
+  Wrap(Puzzle, Multi);
+
+  var Goal := TPoint.Create(Puzzle.Dimensions.X-1, Puzzle.Dimensions.Y-1);
+  Puzzle.Grid[Goal.Y][Goal.X].Risk := Puzzle.Grid[Goal.Y][Goal.X].Height;
+
   Buffer := TList<TPoint>.Create;
 
   // Find the least risky direction from each cell, back to front.
@@ -114,7 +148,7 @@ begin
   // neighbor is evaluated, and only after that, the route is established.
 
   // Start by 1 cell, the final destination, to be explored.
-  Buffer.Add(TPoint.Create(Puzzle.Dimensions.X-1, Puzzle.Dimensions.Y-1));
+  Buffer.Add(Goal);
   repeat
     // Explore each cell in the buffer.
     var Work := Buffer.Count;
@@ -131,9 +165,14 @@ begin
   Result := Puzzle.Grid[Route[1].Y][Route[1].X].Risk;
 end;
 
-function Solve2(const Inputs: TStringArray; Offset: Integer): BigInt;
+function Solve1(const Inputs: TStringArray): BigInt;
 begin
-  //Result := Solve(Inputs, MaxInt, Offset);
+  Result := Solve(Inputs, 1);
+end;
+
+function Solve2(const Inputs: TStringArray): BigInt;
+begin
+  Result := Solve(Inputs, 5);
 end;
 
 var
@@ -144,24 +183,24 @@ begin
   WriteLn('Tests');
   Sleep(100);
   Input := LoadStrings('Day15.test.txt');
-  Result := Solve1(Input, 0);
+  Result := Solve1(Input);
 
   ValidateNr(Result, 40);
-  Result := Solve2(Input, 8);
-  ValidateNr(Result, 0);
+  Result := Solve2(Input);
+  ValidateNr(Result, 315);
 
   WriteLn(#10'Final');
   Input := LoadStrings('Day15.input.txt');
-  Result := Solve1(Input, 16);
+  Result := Solve1(Input);
   ValidateNr(Result, 609);
 
   var s := TStopwatch.StartNew;
   const Iterations = 1;
   for var i := 1 to Iterations do
-    Result := Solve2(Input, 24);
+    Result := Solve2(Input);
   WriteLn(((s.ElapsedTicks * 1000000000) div Iterations) div s.Frequency, ' ns per simulation');
   WriteLn(Iterations, ' iterations in ', s.ElapsedMilliseconds, ' ms');
-  ValidateNr(Result, 0);
+  ValidateNr(Result, 2925);
 
   WriteLn(#10'Hit it');
   ReadLn;
