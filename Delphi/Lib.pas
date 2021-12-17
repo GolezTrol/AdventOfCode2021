@@ -8,6 +8,7 @@ uses
 type TIntArray = TArray<Int64>;
 type TStringArray = TArray<String>;
 
+procedure ClearScreen;
 procedure FgColor(AColor: TColor);
 procedure CursorPos(const X, Y: SmallInt);
 function ToIntArray(Strings: TStrings): TIntArray;
@@ -16,7 +17,13 @@ function LoadStrings(FileName: String): TStringArray;
 procedure Validate(Result: String; Expected: String);
 procedure ValidateNr(Result: Int64; Expected: Int64);
 
+
 implementation
+
+procedure ClearScreen;
+begin
+  Write(#$1B'[2J');
+end;
 
 procedure FgColor(AColor: TColor);
 begin
