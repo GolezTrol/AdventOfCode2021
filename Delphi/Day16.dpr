@@ -39,12 +39,14 @@ type
     Version: Integer;
     TypeId: Integer;
     function VersionSum: Integer; virtual;
+    function Value: BigInt; virtual; abstract;
   end;
 
   TPacketArray = TArray<TPacket>;
 
   TLiteral = class(TPacket)
-    Value: UInt64;
+    FValue: UInt64;
+    function Value: BigInt; override;
   end;
 
   TLengthType = (TotalLength, SubPackets);
@@ -53,22 +55,25 @@ type
     LengthType: TLengthType;
     Subs: TPacketArray;
     function VersionSum: Integer; override;
+    function Value: BigInt; override;
   end;
 
 const
   TYPE_LITERAL = 4;
+  TYPE_OP_SUM = 0;
+  TYPE_OP_PRD = 1;
+  TYPE_OP_MIN = 2;
+  TYPE_OP_MAX = 3;
+  TYPE_OP_GT = 5;
+  TYPE_OP_LT = 6;
+  TYPE_OP_EQ = 7;
 
-
-function ReadPackets(const Bits: TBitStream): TPacketArray;
-begin
-  //Result :=
-end;
 
 function ReadPacket(const Bits: TBitStream): TPacket;
 begin
   var Version := Bits.Read(3);
   var TypeId := Bits.Read(3);
-  WriteLn('Type ', TypeId, ', version, ', Version);
+  //WriteLn('Type ', TypeId, ', version, ', Version);
   if TypeId = TYPE_LITERAL then
   begin
     // Type 4 is a literal, which contains a number in nibbles of 5 bits,
@@ -77,11 +82,11 @@ begin
     var Nibble := 0;
     repeat
       Nibble := Bits.Read(5);
-      Literal.Value := (Literal.Value shl 4);
-      Literal.Value := Literal.Value or (Nibble and $F);
+      Literal.FValue := (Literal.FValue shl 4);
+      Literal.FValue := Literal.FValue or (Nibble and $F);
     until Nibble shr 4 = 0;
 
-    WriteLn('Literal value ', Literal.Value);
+    //WriteLn('Literal value ', Literal.Value);
 
     Result := Literal;
   end
@@ -92,7 +97,7 @@ begin
     if Op.LengthType = TLengthType.TotalLength then
     begin
       var RunLength := Bits.Read(15);
-      WriteLn('Runlength: ', RunLength);
+      //WriteLn('Runlength: ', RunLength);
       var EndPos := Bits.Position + RunLength;
       while Bits.Position < EndPos do
       begin
@@ -104,7 +109,7 @@ begin
     else // TLengthType.SubPackets
     begin
       SetLength(Op.Subs, Bits.Read(11));
-      WriteLn('Sub-packets: ', Length(Op.Subs));
+      //WriteLn('Sub-packets: ', Length(Op.Subs));
       for var i := Low(Op.Subs) to High(Op.Subs) do
         Op.Subs[i] := ReadPacket(Bits);
     end;
@@ -116,10 +121,18 @@ end;
 
 function ReadVersionSum(const s: String): BigInt;
 begin
-  WriteLn(s);
+  //WriteLn(s);
   var Bits := TBitStream.Create(s);
   var Root := ReadPacket(Bits);
   Result := Root.VersionSum;
+end;
+
+function ReadValue(const s: String): BigInt;
+begin
+  //WriteLn(s);
+  var Bits := TBitStream.Create(s);
+  var Root := ReadPacket(Bits);
+  Result := Root.Value;
 end;
 
 function Solve1(const Inputs: TStringArray): BigInt;
@@ -129,7 +142,7 @@ end;
 
 function Solve2(const Inputs: TStringArray): BigInt;
 begin
-  //Result := Solve(Inputs, 5);
+  Result := ReadValue(Inputs[0]);
 end;
 
 var
@@ -198,11 +211,54 @@ end;
 
 { TOperator }
 
+function TOperator.Value: BigInt;
+begin
+  case TypeId of
+    TYPE_OP_SUM:
+    begin
+      Result := 0;
+      for var Sub in Subs do
+        Inc(Result, Sub.Value);
+    end;
+    TYPE_OP_PRD:
+    begin
+      Result := 1;
+      for var Sub in Subs do
+        Result := Result * Sub.Value;
+    end;
+    TYPE_OP_MIN:
+    begin
+      Result := Subs[0].Value;
+      for var s := Low(Subs)+1 to High(Subs) do
+        Result := Min(Result, Subs[s].Value);
+    end;
+    TYPE_OP_MAX:
+    begin
+      Result := Subs[0].Value;
+      for var s := Low(Subs)+1 to High(Subs) do
+        Result := Max(Result, Subs[s].Value);
+    end;
+    TYPE_OP_GT:
+      Result := Ord(Subs[0].Value > Subs[1].Value);
+    TYPE_OP_LT:
+      Result := Ord(Subs[0].Value < Subs[1].Value);
+    TYPE_OP_EQ:
+      Result := Ord(Subs[0].Value = Subs[1].Value);
+  end;
+end;
+
 function TOperator.VersionSum: Integer;
 begin
   Result := inherited;
   for var Sub in Subs do
     Inc(Result, Sub.VersionSum);
+end;
+
+{ TLiteral }
+
+function TLiteral.Value: BigInt;
+begin
+  Result := FValue;
 end;
 
 begin
@@ -212,10 +268,19 @@ begin
   ValidateNr(ReadVersionSum('C0015000016115A2E0802F182340'), 23);
   ValidateNr(ReadVersionSum('A0016C880162017C3686B18A3D4780'), 31);
 
+  ValidateNr(ReadValue('C200B40A82'), 3);
+  ValidateNr(ReadValue('04005AC33890'), 54);
+  ValidateNr(ReadValue('880086C3E88112'), 7);
+  ValidateNr(ReadValue('CE00C43D881120'), 9);
+  ValidateNr(ReadValue('D8005AC2A8F0'), 1);
+  ValidateNr(ReadValue('F600BC2D8F'), 0);
+  ValidateNr(ReadValue('9C005AC2F8F0'), 0);
+  ValidateNr(ReadValue('9C0141080250320F1802104A08'), 1);
+
   WriteLn(#10'Final');
   Input := LoadStrings('Day16.input.txt');
   Result := Solve1(Input);
-  ValidateNr(Result, 609);
+  ValidateNr(Result, 981);
 
   var s := TStopwatch.StartNew;
   const Iterations = 1;
@@ -223,7 +288,7 @@ begin
     Result := Solve2(Input);
   WriteLn(((s.ElapsedTicks * 1000000000) div Iterations) div s.Frequency, ' ns per simulation');
   WriteLn(Iterations, ' iterations in ', s.ElapsedMilliseconds, ' ms');
-  ValidateNr(Result, 2925);
+  ValidateNr(Result, 299227024091);
 
   WriteLn(#10'Hit it');
   ReadLn;
