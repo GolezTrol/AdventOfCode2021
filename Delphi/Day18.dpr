@@ -87,6 +87,26 @@ begin
   Result := Number.Magnitude;
 end;
 
+function CheckMax(const List: TArray<String>): BigInt;
+begin
+  Result := 0;
+
+  var Nums: TArray<TTokenArray>;
+  SetLength(Nums, Length(List));
+  for var i := Low(List) to High(List) do
+    Nums[i] := TTokenUtils.Tokenize(List[i]);
+
+  for var a := Low(Nums) to High(Nums) do
+    for var b := Low(Nums) to High(Nums) do
+      if a <> b then
+      begin
+        var c := TTokenUtils.Add(Nums[a], Nums[b]);
+        var Mag := ReadNumber(TTokenUtils.Serialize(c)).Magnitude;
+        if Mag > Result then
+          Result := Mag;
+      end;
+end;
+
 begin
   WriteLn('Test reading');
 
@@ -156,6 +176,11 @@ begin
   WriteLn('Part 1 answer');
   ValidateNr(CheckSum(Lib.LoadStrings('Day18.Input.txt')), 4176);
 
+  WriteLn;
+  WriteLn('Part 2 test');
+  ValidateNr(CheckMax(Lib.LoadStrings('Day18.Test.txt')), 3993);
+  WriteLn('Part 2 answer');
+  ValidateNr(CheckMax(Lib.LoadStrings('Day18.Input.txt')), 4633);
 
   WriteLn(#10'Hit it');
   ReadLn;
