@@ -42,7 +42,7 @@ type
     Undershot, // Definitely under (not really relevant, maybe?)
     Overshot // Definitely over. No use incrementing StartY for this StartX.
   );
-function Highest(const Input: String): BigInt;
+function Solve(const Input: String; out Highest, Total: BigInt): BigInt;
 begin
   var Target := ReadTarget(Input);
 
@@ -52,7 +52,8 @@ begin
   var MaxYVelocity := 0 - Target.Bottom + 2;
 
   var Exit: TExit;
-  var TotalMaxY: BigInt := 0;
+  Highest := 0;
+  Total := 0;
 
   for var StartXv := 1 to MaxXVelocity do
   begin
@@ -92,19 +93,17 @@ begin
 
       if Exit in [Overshot, Stalled] then
       begin
-        Write(
-          'Stopped Xv ', StartXv, ' after Yv ', StartYv,
-          '(',X,',',Y,') ');
+        //Write('Stopped Xv ', StartXv, ' after Yv ', StartYv,'(',X,',',Y,') ');
       end;
 
       if Exit = TExit.Overshot then // Too hard
       begin
-        WriteLn('Too hard');
+        //WriteLn('Too hard');
         Break;
       end;
       if Exit = TExit.Stalled then // Too steep
       begin
-        WriteLn('Too steep');
+        //WriteLn('Too steep');
         Break;
       end;
 
@@ -115,24 +114,30 @@ begin
 
       if Exit = TExit.Hit then
       begin
-        TotalMaxY := Max(TotalMaxY, MaxY);
-        WriteLn('Hit! Xv:', StartXv, ', Yv:', StartYv, '. MaxY:', MaxY, '. Steps:', Step);
+        Highest := Max(Highest, MaxY);
+        Inc(Total);
+        //WriteLn('Hit! Xv:', StartXv, ', Yv:', StartYv, '. MaxY:', MaxY, '. Steps:', Step);
       end;
     end;
   end;
-  Result := TotalMaxY;
 end;
 
+var
+  Highest, Total: BigInt;
 begin
-  WriteLn('Part1, test');
-  ValidateNr(Highest('target area: x=20..30, y=-10..-5'), 45);
-  WriteLn('Part1, final');
-  ValidateNr(Highest('target area: x=269..292, y=-68..-44'), 0);
+  WriteLn('Test');
 
-  //WriteLn('Part2, test');
-  //ValidateNr(Solve2('target area: x=20..30, y=-10..-5'), 0);
-  //WriteLn('Part, final');
-  //ValidateNr(Solve2('target area: x=269..292, y=-68..-44'), 0);
+  Solve('target area: x=20..30, y=-10..-5', Highest, Total);
+  Write('1. Highest ');
+  ValidateNr(Highest, 45);
+  Write('2. Total ');
+  ValidateNr(Total, 112);
+
+  Solve('target area: x=269..292, y=-68..-44', Highest, Total);
+  Write('1. Highest ');
+  ValidateNr(Highest, 2278);
+  Write('2. Total ');
+  ValidateNr(Total, 996);
 
   WriteLn(#10'Hit it');
   ReadLn;
