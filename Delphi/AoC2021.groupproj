@@ -60,6 +60,9 @@
         <Projects Include="Day19.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="Day21.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -239,14 +242,23 @@
     <Target Name="Day19:Make">
         <MSBuild Projects="Day19.dproj" Targets="Make"/>
     </Target>
+    <Target Name="Day21">
+        <MSBuild Projects="Day21.dproj"/>
+    </Target>
+    <Target Name="Day21:Clean">
+        <MSBuild Projects="Day21.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Day21:Make">
+        <MSBuild Projects="Day21.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="Day1;Day2;Day3;Day4;Day5;Day6;Day7;Day8;Day9;Day10;Day11;Day12;Day13;Day14;Day15;Day16;Day17;Day18;Day19"/>
+        <CallTarget Targets="Day1;Day2;Day3;Day4;Day5;Day6;Day7;Day8;Day9;Day10;Day11;Day12;Day13;Day14;Day15;Day16;Day17;Day18;Day19;Day21"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="Day1:Clean;Day2:Clean;Day3:Clean;Day4:Clean;Day5:Clean;Day6:Clean;Day7:Clean;Day8:Clean;Day9:Clean;Day10:Clean;Day11:Clean;Day12:Clean;Day13:Clean;Day14:Clean;Day15:Clean;Day16:Clean;Day17:Clean;Day18:Clean;Day19:Clean"/>
+        <CallTarget Targets="Day1:Clean;Day2:Clean;Day3:Clean;Day4:Clean;Day5:Clean;Day6:Clean;Day7:Clean;Day8:Clean;Day9:Clean;Day10:Clean;Day11:Clean;Day12:Clean;Day13:Clean;Day14:Clean;Day15:Clean;Day16:Clean;Day17:Clean;Day18:Clean;Day19:Clean;Day21:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="Day1:Make;Day2:Make;Day3:Make;Day4:Make;Day5:Make;Day6:Make;Day7:Make;Day8:Make;Day9:Make;Day10:Make;Day11:Make;Day12:Make;Day13:Make;Day14:Make;Day15:Make;Day16:Make;Day17:Make;Day18:Make;Day19:Make"/>
+        <CallTarget Targets="Day1:Make;Day2:Make;Day3:Make;Day4:Make;Day5:Make;Day6:Make;Day7:Make;Day8:Make;Day9:Make;Day10:Make;Day11:Make;Day12:Make;Day13:Make;Day14:Make;Day15:Make;Day16:Make;Day17:Make;Day18:Make;Day19:Make;Day21:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
